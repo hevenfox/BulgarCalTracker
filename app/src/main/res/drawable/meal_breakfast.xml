@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- croissant -->
+    <path
+        android:fillColor="#E8B872"
+        android:pathData="M8,30 C10,18 20,12 30,14 C34,15 38,18 40,24 C36,20 30,18 24,20 C18,22 12,26 8,30 Z" />
+    <path
+        android:fillColor="#D49A4A"
+        android:pathData="M12,28 C14,22 20,18 26,19 C28,19.5 30,21 31,23 C28,21 24,21 20,23 C16,25 13,27 12,28 Z" />
+    <!-- coffee cup -->
+    <path
+        android:fillColor="#F5F0E8"
+        android:pathData="M26,28 h12 v10 c0,2 -2,4 -6,4 s-6,-2 -6,-4 z" />
+    <path
+        android:fillColor="#8B5A2B"
+        android:pathData="M28,30 h8 v6 c0,1 -1,2 -4,2 s-4,-1 -4,-2 z" />
+    <path
+        android:strokeColor="#F5F0E8"
+        android:strokeWidth="2"
+        android:fillColor="#00000000"
+        android:pathData="M38,30 h3 c1.5,0 3,1.5 3,3.5 s-1.5,3.5 -3,3.5 h-3" />
+</vector>

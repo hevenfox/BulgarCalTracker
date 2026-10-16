@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- plate -->
+    <path
+        android:fillColor="#E8E4DC"
+        android:pathData="M24,40 c-10,0 -18,-6 -18,-10 c0,-2 8,-4 18,-4 s18,2 18,4 c0,4 -8,10 -18,10 z" />
+    <path
+        android:fillColor="#F5F0E8"
+        android:pathData="M24,36 c-7,0 -13,-4 -13,-7 c0,-1 6,-3 13,-3 s13,2 13,3 c0,3 -6,7 -13,7 z" />
+    <!-- cloche dome -->
+    <path
+        android:fillColor="#7DB9E8"
+        android:fillAlpha="0.35"
+        android:pathData="M10,26 C10,14 16,8 24,8 s14,6 14,18 z" />
+    <path
+        android:strokeColor="#DCE6EE"
+        android:strokeWidth="2"
+        android:fillColor="#00000000"
+        android:pathData="M10,26 C10,14 16,8 24,8 s14,6 14,18" />
+    <!-- cloche knob -->
+    <path
+        android:fillColor="#EDB872"
+        android:pathData="M22,6 h4 v3 h-4 z" />
+    <path
+        android:fillColor="#EDB872"
+        android:pathData="M24,4 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <!-- candle -->
+    <path
+        android:fillColor="#F5F0E8"
+        android:pathData="M38,22 h3 v12 h-3 z" />
+    <path
+        android:fillColor="#EDB872"
+        android:pathData="M39.5,16 c2,3 2,5 0,7 c-2,-2 -2,-4 0,-7 z" />
+</vector>
