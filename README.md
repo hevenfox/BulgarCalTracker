@@ -65,7 +65,7 @@ next launch, keeping user products, recipes, diary, weight and water history).
 | --- | --- | --- | --- |
 | `assets/foods.json` | 92 | curated Bulgarian foods and traditional dishes | MIT |
 | `assets/products.json` | ~26 200 | branded products (protein bars, skyr, protein powders, energy drinks, croissants, sodas, snacks, ready meals …) with label values | ODbL / DbCL |
-| `assets/dishes.json` | ~5 000 | USDA FNDDS dishes plus ~280 hand-authored Bulgarian dishes (мусака, крем супа, шкембе чорба …) | public domain / MIT |
+| `assets/dishes.json` | 5 023 | 4 732 USDA FNDDS dishes plus 308 hand-authored Bulgarian dishes (мусака, крем супа, шкембе чорба …) | public domain / MIT |
 
 Row format — **snake_case** and **camelCase** keys are both accepted, and every key
 after the first four is optional:
@@ -100,8 +100,8 @@ after the first four is optional:
 
 ### Where the data comes from
 
-- **Open Food Facts** — real branded products with real label values, filtered to rows whose per-100 g nutrition is complete and whose stated energy agrees with its macros (Atwater check, ±25 % or 25 kcal). See [THIRD-PARTY-DATA.md](THIRD-PARTY-DATA.md) for the ODbL attribution and share-alike terms.
-- **USDA FoodData Central (FNDDS 2021–2023)** — public domain, 4 700+ prepared dishes and generic foods, translated to Bulgarian by `tools/foods_db/bg_glossary.json`.
+- **Open Food Facts** — real branded products with real label values, filtered to rows whose per-100 g nutrition is complete and whose stated energy agrees with its macros (Atwater check, ±22 % or 25 kcal, counting fibre at 2 kcal/g). See [THIRD-PARTY-DATA.md](THIRD-PARTY-DATA.md) for the ODbL attribution and share-alike terms.
+- **USDA FoodData Central (FNDDS 2021–2023)** — public domain, 4 700+ prepared dishes and generic foods after the same energy check, translated to Bulgarian by `tools/foods_db/bg_glossary.json`; rows whose description cannot be translated confidently are dropped.
 - **Hand-authored Bulgarian dishes** — `tools/foods_db/bg_dishes.json`; every value is the sum of its ingredient list divided by the cooked weight, so it can be recomputed by hand.
 - **Glycemic index is an estimate**: no label carries it, so it comes from a per-category table and is only applied when a food has ≥ 2 g available carbs per 100 g. Glycemic load is `GI × (carbs − fiber) / 100`.
 

@@ -35,6 +35,7 @@ import java.time.Period
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class TrackerViewModel(app: Application) : AndroidViewModel(app) {
 
     private val db = AppDatabase.get(app)

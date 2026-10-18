@@ -59,7 +59,7 @@ Assets: 7.62 MB of JSON in `app/src/main/assets`.
 ## Checks
 
 - duplicates across files: **0**
-- rows failing the energy/macro check: **2**
+- rows failing the energy/macro check: **0**
 - alcohol rows exempt from it (7 kcal/g, not trackable): **6**
 - rows with unusable numbers: **0**
 - rows with unknown keys: **0**
@@ -67,17 +67,12 @@ Assets: 7.62 MB of JSON in `app/src/main/assets`.
 - biggest category share: **15.0%**
 - GI/GL inconsistencies: **0**
 
-### Rows failing the energy/macro check
-
-- products.json[18274] Harissa à la rose Shimon Ariche 230 g: 70 kcal vs macros
-- products.json[19934] Organic plant based protein & greens powder creamy Orgain: 306 kcal vs macros
-
 ## products_build.json
 
 ```json
 {
   "total": 26223,
-  "bytes": 6249059,
+  "bytes": 6248998,
   "by_category": {
     "Кисели млека и скир": 4648,
     "Тестени и сладкиши": 2979,
@@ -424,14 +419,15 @@ Assets: 7.62 MB of JSON in `app/src/main/assets`.
     "name-length": 507,
     "brand-length": 12,
     "no-brand": 9361,
-    "duplicate": 6346,
+    "duplicate": 6345,
     "range": 54,
     "junk-name": 106,
     "macro-sum": 12,
     "brand-cap": 883,
+    "atwater-rounded": 3,
     "name-script": 12
   },
-  "unique_brands": 9223
+  "unique_brands": 9222
 }
 ```
 

@@ -42,6 +42,22 @@ FoodData Central, a work of the US Government and therefore in the public domain
 It is credited in the app anyway: every USDA-derived food is marked in the food
 sheet ("Данни: USDA FoodData Central (FNDDS)").
 
+## Consistency rules applied to third-party rows
+
+Both upstream sources are filtered so the app's own arithmetic cannot contradict
+the label:
+
+- the four macros must be present and within 0–100 g per 100 g;
+- the stated energy must be explicable from those macros (`4 × (carbs − fibre) +
+  2 × fibre + 4 × protein + 9 × fat`, tolerance ±22 % or 25 kcal);
+- saturated fat, sugars and fibre may not exceed total fat or total carbohydrate.
+
+Alcohol is the one documented exception: it carries 7 kcal/g that no macro
+describes, and the app does not track alcohol grams, so **Алкохол** rows are exempt
+from the energy check while still passing the range checks. The exact numbers of
+kept, dropped and exempt rows per source are written into
+[tools/foods_db/report.md](tools/foods_db/report.md) on every validation run.
+
 ## What the values mean
 
 All values are **per 100 g / 100 ml**. The package size shown in a product name

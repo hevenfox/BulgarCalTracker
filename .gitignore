@@ -15,3 +15,8 @@ build/
 # kept local, not part of the repository
 .cursor/
 /awd/
+
+# food-database tooling: downloaded sources and run summaries stay local
+tools/foods_db/cache/
+tools/foods_db/__pycache__/
+__pycache__/

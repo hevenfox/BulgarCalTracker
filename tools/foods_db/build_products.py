@@ -372,6 +372,13 @@ def main() -> int:
                 dropped[reason] = dropped.get(reason, 0) + 1
                 continue
             row, meta = parsed
+            # The gate above sees unrounded values; the file (and validate.py) hold
+            # rounded ones, so re-check the exact numbers that will be written.
+            if not atwater_ok(row["calories"], row["carbs"], row["protein"], row["fats"],
+                              row.get("fiber") or 0.0):
+                reasons["atwater-rounded"] = reasons.get("atwater-rounded", 0) + 1
+                dropped["atwater-rounded"] = dropped.get("atwater-rounded", 0) + 1
+                continue
             label_key = normalize_key(row["name"])
             if not meta["key"] or meta["key"] in seen_keys or label_key in seen_labels:
                 reasons["duplicate"] = reasons.get("duplicate", 0) + 1
