@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bulgarcal.tracker.data.FoodEntity
@@ -102,10 +104,11 @@ fun LogFoodSheet(
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = grams,
-                onValueChange = { grams = it.filter { c -> c.isDigit() || c == '.' } },
+                onValueChange = { grams = it.filter { c -> c.isDigit() || c == '.' || c == ',' }.replace(',', '.') },
                 label = { Text("Грамаж (g)", color = TextSilver) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 colors = fieldColors()
             )
             Spacer(Modifier.height(12.dp))

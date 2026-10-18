@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -33,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bulgarcal.tracker.data.FoodEntity
@@ -247,7 +249,7 @@ fun NewProductScreen(
                     name = name.ifBlank { "Продукт" },
                     category = category,
                     description = desc,
-                    calories = calories.toIntOrNull() ?: 0,
+                    calories = calories.toFloatOrNull()?.toInt() ?: 0,
                     carbs = carbs.toFloatOrNull() ?: 0f,
                     protein = protein.toFloatOrNull() ?: 0f,
                     fats = fats.toFloatOrNull() ?: 0f,
@@ -264,12 +266,12 @@ fun NewProductScreen(
         LazyColumn {
             item { Field("Име на продукт", name) { name = it } }
             item { Field("Описание (по избор)", desc) { desc = it } }
-            item { Row(Modifier.fillMaxWidth()) { Field("Категория", category, Modifier.weight(1f)) { category = it }; Field("Калории", calories, Modifier.weight(1f)) { calories = it } } }
-            item { Row(Modifier.fillMaxWidth()) { Field("Мазнини", fats, Modifier.weight(1f)) { fats = it }; Field("Наситени", sat, Modifier.weight(1f)) { sat = it } } }
-            item { Row(Modifier.fillMaxWidth()) { Field("Въглехидрати", carbs, Modifier.weight(1f)) { carbs = it }; Field("ГИ", gi, Modifier.weight(1f)) { gi = it } } }
-            item { Row(Modifier.fillMaxWidth()) { Field("Захар", sugars, Modifier.weight(1f)) { sugars = it }; Field("Фибри", fiber, Modifier.weight(1f)) { fiber = it } } }
-            item { Field("Протеини", protein) { protein = it } }
-            item { Row(Modifier.fillMaxWidth()) { Field("Сол", salt, Modifier.weight(1f)) { salt = it }; Field("Грамаж", grams, Modifier.weight(1f)) { grams = it } } }
+            item { Row(Modifier.fillMaxWidth()) { Field("Категория", category, Modifier.weight(1f)) { category = it }; Field("Калории", calories, Modifier.weight(1f), numeric = true) { calories = it } } }
+            item { Row(Modifier.fillMaxWidth()) { Field("Мазнини", fats, Modifier.weight(1f), numeric = true) { fats = it }; Field("Наситени", sat, Modifier.weight(1f), numeric = true) { sat = it } } }
+            item { Row(Modifier.fillMaxWidth()) { Field("Въглехидрати", carbs, Modifier.weight(1f), numeric = true) { carbs = it }; Field("ГИ", gi, Modifier.weight(1f), numeric = true) { gi = it } } }
+            item { Row(Modifier.fillMaxWidth()) { Field("Захар", sugars, Modifier.weight(1f), numeric = true) { sugars = it }; Field("Фибри", fiber, Modifier.weight(1f), numeric = true) { fiber = it } } }
+            item { Field("Протеини", protein, numeric = true) { protein = it } }
+            item { Row(Modifier.fillMaxWidth()) { Field("Сол", salt, Modifier.weight(1f), numeric = true) { salt = it }; Field("Грамаж", grams, Modifier.weight(1f), numeric = true) { grams = it } } }
         }
     }
     }
@@ -288,7 +290,7 @@ fun NewRecipeScreen(onBack: () -> Unit, onSave: (FoodEntity) -> Unit) {
                     name = name.ifBlank { "Рецепта" },
                     category = "Моите Рецепти",
                     description = desc,
-                    calories = calories.toIntOrNull() ?: 0,
+                    calories = calories.toFloatOrNull()?.toInt() ?: 0,
                     carbs = 0f, protein = 0f, fats = 0f,
                     isCustom = true, isRecipe = true
                 )
@@ -296,7 +298,7 @@ fun NewRecipeScreen(onBack: () -> Unit, onSave: (FoodEntity) -> Unit) {
         })
         Field("Име на продукт", name) { name = it }
         Field("Описание (по избор)", desc) { desc = it }
-        Field("Калории", calories) { calories = it }
+        Field("Калории", calories, numeric = true) { calories = it }
         TealButton("(+) Добави", onClick = { })
     }
     }
@@ -322,13 +324,33 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
     )
 }
 
+/**
+ * Text input whose keyboard follows the kind of value: numbers only for macros,
+ * grams and the rest of the numeric fields, a normal keyboard for names and
+ * descriptions. Numeric input also drops stray letters pasted in.
+ */
 @Composable
-private fun Field(label: String, value: String, modifier: Modifier = Modifier.fillMaxWidth(), onChange: (String) -> Unit) {
+private fun Field(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    numeric: Boolean = false,
+    onChange: (String) -> Unit
+) {
     OutlinedTextField(
         value = value,
-        onValueChange = onChange,
+        onValueChange = { text ->
+            onChange(
+                if (numeric) text.filter { c -> c.isDigit() || c == '.' || c == ',' }.replace(',', '.')
+                else text
+            )
+        },
         label = { Text(label, color = TextSilver) },
         modifier = modifier.padding(vertical = 4.dp),
+        singleLine = numeric,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text
+        ),
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = TextWhite,
             unfocusedTextColor = TextWhite
