@@ -37,6 +37,7 @@ import com.bulgarcal.tracker.ui.components.DateNavigator
 import com.bulgarcal.tracker.ui.components.ScreenTopBar
 import com.bulgarcal.tracker.ui.components.TealButton
 import com.bulgarcal.tracker.ui.theme.CaloriePurple
+import com.bulgarcal.tracker.ui.food.microLabel
 import com.bulgarcal.tracker.ui.theme.CarbsRed
 import com.bulgarcal.tracker.ui.theme.EmeraldTeal
 import com.bulgarcal.tracker.ui.theme.FatOrange
@@ -70,24 +71,36 @@ fun MicroDetailsScreen(
             RatioRow("Мазнини", p.fatGrams.toInt(), totals.fats.toInt(), FatOrange)
         }
         Spacer(Modifier.height(16.dp))
+        // GI is the carb-weighted average of the foods logged today (data files carry a
+        // category-level estimate), GL is the sum of each food's glycemic load.
+        val giLabel = if (totals.averageGlycemicIndex > 0f) {
+            totals.averageGlycemicIndex.toInt().toString()
+        } else {
+            "—"
+        }
+        val glLabel = if (totals.glycemicLoad > 0f) {
+            "%.1f".format(totals.glycemicLoad)
+        } else {
+            "—"
+        }
         DetailSection("Въглехидрати", listOf(
-            "Нетни" to "${(totals.carbs - totals.fiber).toInt()} g",
+            "Нетни" to "${totals.netCarbs.toInt()} g",
             "Фибри" to "${totals.fiber.toInt()} g",
             "Захар" to "${totals.sugars.toInt()} g",
-            "ГИ" to "—",
-            "ГЛ" to "—"
+            "ГИ" to giLabel,
+            "ГЛ" to glLabel
         ))
         DetailSection("Мазнини", listOf(
-            "Мононенаситени" to "—",
-            "Полиненаситени" to "—",
+            "Мононенаситени" to microLabel(totals.monoFats, "g", 1),
+            "Полиненаситени" to microLabel(totals.polyFats, "g", 1),
             "Наситени" to "${totals.saturatedFats.toInt()} g",
-            "Трансмазнини" to "0 g"
+            "Трансмазнини" to microLabel(totals.transFats, "g", 1)
         ))
         DetailSection("Други", listOf(
-            "Холестерол" to "—",
-            "Сол" to "${totals.salt.toInt()} g",
-            "Калий" to "—",
-            "Вода" to "—"
+            "Холестерол" to microLabel(totals.cholesterol, "mg"),
+            "Сол" to "%.2f g".format(totals.salt),
+            "Калий" to microLabel(totals.potassium, "mg"),
+            "Вода" to microLabel(totals.water, "g", 1)
         ))
     }
 }

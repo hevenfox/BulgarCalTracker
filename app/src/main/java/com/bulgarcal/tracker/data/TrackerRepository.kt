@@ -2,11 +2,17 @@ package com.bulgarcal.tracker.data
 
 import com.bulgarcal.tracker.domain.CalculationEngine
 import com.bulgarcal.tracker.domain.MealType
+import com.bulgarcal.tracker.domain.SearchKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 
 class TrackerRepository(private val db: AppDatabase) {
+
+    companion object {
+        /** Marks rows the user created themselves (bundled rows carry off/usda/curated). */
+        const val USER_SOURCE = "user"
+    }
 
     val profile: Flow<UserProfileEntity?> = db.userProfileDao().observe()
     val weightEntries: Flow<List<WeightEntryEntity>> = db.weightEntryDao().all()
@@ -26,7 +32,11 @@ class TrackerRepository(private val db: AppDatabase) {
         if (category == "Моите Рецепти") db.foodDao().recipes()
         else db.foodDao().byCategory(category, query)
 
-    fun searchFoods(query: String): Flow<List<FoodEntity>> = db.foodDao().search(query)
+    /** Search in either keyboard layout: "musaka" and "Мусака" both work. */
+    fun searchFoods(query: String): Flow<List<FoodEntity>> {
+        val trimmed = query.trim()
+        return db.foodDao().search(SearchKey.ofQuery(trimmed), trimmed.lowercase())
+    }
 
     fun favoriteFoods(): Flow<List<FoodEntity>> = db.foodDao().favorites()
 
@@ -69,7 +79,14 @@ class TrackerRepository(private val db: AppDatabase) {
                 sugars = food.sugars * factor,
                 fiber = food.fiber * factor,
                 glycemicIndex = food.glycemicIndex,
-                salt = food.salt * factor
+                salt = food.salt * factor,
+                monoFats = food.monoFats * factor,
+                polyFats = food.polyFats * factor,
+                transFats = food.transFats * factor,
+                cholesterol = food.cholesterol * factor,
+                potassium = food.potassium * factor,
+                water = food.water * factor,
+                glycemicLoad = food.glycemicLoad * factor
             )
         )
     }
@@ -94,7 +111,14 @@ class TrackerRepository(private val db: AppDatabase) {
             sugars = food.sugars * factor,
             fiber = food.fiber * factor,
             glycemicIndex = food.glycemicIndex,
-            salt = food.salt * factor
+            salt = food.salt * factor,
+            monoFats = food.monoFats * factor,
+            polyFats = food.polyFats * factor,
+            transFats = food.transFats * factor,
+            cholesterol = food.cholesterol * factor,
+            potassium = food.potassium * factor,
+            water = food.water * factor,
+            glycemicLoad = food.glycemicLoad * factor
         )
         db.mealLogDao().update(updated)
     }
@@ -102,13 +126,28 @@ class TrackerRepository(private val db: AppDatabase) {
     suspend fun deleteLog(id: Long) = db.mealLogDao().delete(id)
 
     suspend fun saveCustomProduct(food: FoodEntity): Long =
-        db.foodDao().insert(food.copy(isCustom = true, isRecipe = false))
+        db.foodDao().insert(
+            food.copy(
+                isCustom = true,
+                isRecipe = false,
+                searchKey = SearchKey.of(food.name),
+                source = USER_SOURCE
+            )
+        )
 
     suspend fun saveRecipe(
         food: FoodEntity,
         ingredients: List<RecipeIngredientEntity>
     ): Long {
-        val id = db.foodDao().insert(food.copy(isCustom = true, isRecipe = true, category = "Моите Рецепти"))
+        val id = db.foodDao().insert(
+            food.copy(
+                isCustom = true,
+                isRecipe = true,
+                category = "Моите Рецепти",
+                searchKey = SearchKey.of(food.name),
+                source = USER_SOURCE
+            )
+        )
         db.recipeIngredientDao().insertAll(
             ingredients.map { it.copy(recipeFoodId = id) }
         )

@@ -71,6 +71,10 @@ class TrackerViewModel(app: Application) : AndroidViewModel(app) {
     private val _pendingMeal = MutableStateFlow<MealType?>(null)
     val pendingMeal: StateFlow<MealType?> = _pendingMeal.asStateFlow()
 
+    /** False until the bundled food database finished loading on first launch. */
+    private val _foodDbReady = MutableStateFlow(false)
+    val foodDbReady: StateFlow<Boolean> = _foodDbReady.asStateFlow()
+
     val weightEntries: StateFlow<List<WeightEntryEntity>> =
         repo.weightEntries.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -95,6 +99,7 @@ class TrackerViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             FoodSeeder.seedIfNeeded(app, db)
+            _foodDbReady.value = true
         }
         viewModelScope.launch {
             _waterIncrement.value = repo.getWaterIncrement()

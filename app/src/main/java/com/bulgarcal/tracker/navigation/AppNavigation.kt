@@ -23,6 +23,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flowOf
 import com.bulgarcal.tracker.TrackerViewModel
 import com.bulgarcal.tracker.data.ActivityLevel
 import com.bulgarcal.tracker.data.AppDatabase
@@ -31,6 +33,7 @@ import com.bulgarcal.tracker.data.GoalType
 import com.bulgarcal.tracker.data.Sex
 import com.bulgarcal.tracker.domain.CalculationEngine
 import com.bulgarcal.tracker.domain.MealType
+import com.bulgarcal.tracker.domain.SearchKey
 import com.bulgarcal.tracker.domain.ProgressSubTab
 import com.bulgarcal.tracker.ui.details.MacroEditScreen
 import com.bulgarcal.tracker.ui.details.MicroDetailsScreen
@@ -307,18 +310,27 @@ private fun NavGraphBuilder.foodRoutes(nav: NavHostController, vm: TrackerViewMo
         val db = remember { AppDatabase.get(ctx) }
         val selectedDate by vm.selectedDate.collectAsState()
         val pendingMeal by vm.pendingMeal.collectAsState()
+        val dbReady by vm.foodDbReady.collectAsState()
         var query by remember { mutableStateOf("") }
-        var results by remember { mutableStateOf(emptyList<FoodEntity>()) }
         var showCreate by remember { mutableStateOf(false) }
         var foodToLog by remember { mutableStateOf<FoodEntity?>(null) }
+        // Typing must stay responsive against ~30 000 rows: run the query 300 ms after
+        // the last keystroke, and keep it as a Flow so results also appear when the
+        // database is still being seeded on first launch.
+        var debounced by remember { mutableStateOf("") }
         LaunchedEffect(query) {
-            if (query.isNotBlank()) results = db.foodDao().search(query).first()
-            else results = emptyList()
+            delay(300)
+            debounced = query.trim()
         }
+        val results by remember(debounced) {
+            if (debounced.isBlank()) flowOf(emptyList())
+            else db.foodDao().search(SearchKey.ofQuery(debounced), debounced.lowercase())
+        }.collectAsState(initial = emptyList())
         FoodSearchScreen(
             query = query,
             onQueryChange = { query = it },
             foods = results,
+            loading = !dbReady,
             onCategory = { nav.navigate("food_category/$it") },
             onRecipes = { nav.navigate(Routes.MY_RECIPES) },
             onFavorites = { nav.navigate(Routes.FAVORITES) },
@@ -360,9 +372,10 @@ private fun NavGraphBuilder.foodRoutes(nav: NavHostController, vm: TrackerViewMo
         val db = remember { AppDatabase.get(ctx) }
         val selectedDate by vm.selectedDate.collectAsState()
         val pendingMeal by vm.pendingMeal.collectAsState()
-        var foods by remember { mutableStateOf(emptyList<FoodEntity>()) }
         var foodToLog by remember { mutableStateOf<FoodEntity?>(null) }
-        LaunchedEffect(cat) { foods = db.foodDao().byCategory(cat, "").first() }
+        // A Flow, not a one-shot read: a 6 000-row category arrives as it is queried.
+        val foods by remember(cat) { db.foodDao().byCategory(cat, "") }
+            .collectAsState(initial = emptyList())
         CategoryFoodsScreen(
             category = cat,
             foods = foods,

@@ -1,5 +1,6 @@
 package com.bulgarcal.tracker.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -21,7 +22,18 @@ data class FoodEntity(
     val isRecipe: Boolean = false,
     val description: String = "",
     val servingGrams: Float = 100f,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    /** Added in database version 4; the defaults are declared so the 3 -> 4
+     *  migration and a fresh install produce the same schema. */
+    @ColumnInfo(defaultValue = "0") val monoFats: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val polyFats: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val transFats: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val cholesterol: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val potassium: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val water: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val glycemicLoad: Float = 0f,
+    @ColumnInfo(defaultValue = "''") val searchKey: String = "",
+    @ColumnInfo(defaultValue = "''") val source: String = ""
 )
 
 @Entity(tableName = "meal_logs")
@@ -40,7 +52,14 @@ data class MealLogEntity(
     val sugars: Float = 0f,
     val fiber: Float = 0f,
     val glycemicIndex: Float = 0f,
-    val salt: Float = 0f
+    val salt: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val monoFats: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val polyFats: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val transFats: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val cholesterol: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val potassium: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val water: Float = 0f,
+    @ColumnInfo(defaultValue = "0") val glycemicLoad: Float = 0f
 )
 
 @Entity(tableName = "user_profile")

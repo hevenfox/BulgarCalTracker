@@ -24,8 +24,25 @@ interface FoodDao {
     @Query("SELECT * FROM foods WHERE category = :category AND name LIKE '%' || :query || '%' ORDER BY name")
     fun byCategory(category: String, query: String = ""): Flow<List<FoodEntity>>
 
-    @Query("SELECT * FROM foods WHERE name LIKE '%' || :query || '%' ORDER BY name LIMIT 100")
-    fun search(query: String): Flow<List<FoodEntity>>
+    /**
+     * [key] is the query transliterated to Latin (see SearchKey), [raw] is what the
+     * user typed. Matching the key makes "musaka" find "Мусака" and keeps Cyrillic
+     * input working in either case; the raw fallback still finds custom foods
+     * created before the search key existed. Shortest names first, so an exact-ish
+     * product beats a long one containing the same words.
+     */
+    @Query(
+        "SELECT * FROM foods WHERE searchKey LIKE '%' || :key || '%' " +
+            "OR LOWER(name) LIKE '%' || :raw || '%' " +
+            "ORDER BY LENGTH(name), name LIMIT 100"
+    )
+    fun search(key: String, raw: String): Flow<List<FoodEntity>>
+
+    @Query("SELECT * FROM foods WHERE searchKey = ''")
+    suspend fun rowsWithoutSearchKey(): List<FoodEntity>
+
+    @Update
+    suspend fun updateAll(foods: List<FoodEntity>)
 
     @Query("SELECT * FROM foods WHERE id = :id")
     suspend fun getById(id: Long): FoodEntity?
@@ -69,7 +86,15 @@ interface MealLogDao {
                COALESCE(SUM(saturatedFats),0) as saturatedFats,
                COALESCE(SUM(sugars),0) as sugars,
                COALESCE(SUM(fiber),0) as fiber,
-               COALESCE(SUM(salt),0) as salt
+               COALESCE(SUM(salt),0) as salt,
+               COALESCE(SUM(monoFats),0) as monoFats,
+               COALESCE(SUM(polyFats),0) as polyFats,
+               COALESCE(SUM(transFats),0) as transFats,
+               COALESCE(SUM(cholesterol),0) as cholesterol,
+               COALESCE(SUM(potassium),0) as potassium,
+               COALESCE(SUM(water),0) as water,
+               COALESCE(SUM(glycemicLoad),0) as glycemicLoad,
+               COALESCE(SUM(glycemicIndex * carbs),0) as glycemicIndexWeighted
         FROM meal_logs WHERE dateEpochDay = :day
         """
     )
@@ -107,8 +132,24 @@ data class DayTotalsRow(
     val saturatedFats: Float,
     val sugars: Float,
     val fiber: Float,
-    val salt: Float
-)
+    val salt: Float,
+    val monoFats: Float = 0f,
+    val polyFats: Float = 0f,
+    val transFats: Float = 0f,
+    val cholesterol: Float = 0f,
+    val potassium: Float = 0f,
+    val water: Float = 0f,
+    val glycemicLoad: Float = 0f,
+    /** SUM(GI * carbs); divided by the day's carbs for the average GI. */
+    val glycemicIndexWeighted: Float = 0f
+) {
+    /** Carb-weighted average glycemic index for the day, 0 when unknown. */
+    val averageGlycemicIndex: Float
+        get() = if (carbs > 0f) glycemicIndexWeighted / carbs else 0f
+
+    /** Net carbs: total carbs minus fiber. */
+    val netCarbs: Float get() = (carbs - fiber).coerceAtLeast(0f)
+}
 
 data class MealCalorieRow(val mealType: String, val total: Int)
 

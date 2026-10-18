@@ -1,0 +1,89 @@
+  protein_bars       page  1 hits 1000 kept  715/1500 total    715 (cached)
+  protein_bars       page  2 hits 1000 kept 1472/1500 total   1472 (cached)
+  protein_bars       page  3 hits 1000 kept 1500/1500 total   1500 (cached)
+  protein_powders    page  1 hits 1000 kept  614/1300 total   2114 (cached)
+  protein_powders    page  2 hits 1000 kept 1142/1300 total   2642 (cached)
+  protein_powders    page  3 hits 1000 kept 1300/1300 total   2800 (cached)
+  supplements        page  1 hits 1000 kept  291/700  total   3091
+  supplements        page  2 hits 1000 kept  503/700  total   3303
+  supplements        page  3 hits 1000 kept  700/700  total   3500
+  shakes_mrp         page  1 hits 1000 kept  400/400  total   3900
+  energy_drinks      page  1 hits 1000 kept  686/1100 total   4586
+  energy_drinks      page  2 hits 1000 kept 1100/1100 total   5000
+  bars_cereal        page  1 hits 1000 kept  300/300  total   5300
+  sodas              page  1 hits 1000 kept  776/900  total   6076
+  sodas              page  2 hits 1000 kept  900/900  total   6200
+  juices             page  1 hits 1000 kept  802/900  total   7002
+  juices             page  2 hits 1000 kept  900/900  total   7100
+  coffees            page  1 hits 1000 kept  675/700  total   7775
+  coffees            page  2 hits 1000 kept  700/700  total   7800
+  teas               page  1 hits 1000 kept  450/450  total   8250
+  waters             page  1 hits 1000 kept  500/500  total   8750
+  yogurts            page  1 hits 1000 kept  599/1800 total   9349
+  yogurts            page  2 hits 1000 kept 1286/1800 total  10036
+  yogurts            page  3 hits 1000 kept 1800/1800 total  10550
+  quarks             page  1 hits 1000 kept  700/700  total  11250
+  fermented          page  1 hits 1000 kept  578/900  total  11828
+  fermented          page  2 hits 1000 kept  900/900  total  12150
+  dairy_desserts     page  1 hits 1000 kept   74/700  total  12224
+  dairy_desserts     page  2 hits 1000 kept  104/700  total  12254
+  dairy_desserts     page  3 hits 1000 kept  481/700  total  12631
+  milks              page  1 hits 1000 kept  608/700  total  13239
+  milks              page  2 hits 1000 kept  700/700  total  13331
+  cheeses            page  1 hits 1000 kept   22/1000 total  13353
+  cheeses            page  2 hits 1000 kept  286/1000 total  13617
+  cheeses            page  3 hits 1000 kept  411/1000 total  13742
+  cheeses            page  4 hits 1000 kept 1000/1000 total  14331
+  breads             page  1 hits 1000 kept  600/600  total  14931
+  cereals            page  1 hits 1000 kept  700/700  total  15631
+  croissants         page  1 hits 1000 kept  600/600  total  16231
+  viennoiseries      page  1 hits 1000 kept  500/500  total  16731
+  pastries           page  1 hits 1000 kept  648/700  total  17379
+  pastries           page  2 hits 1000 kept  700/700  total  17431
+  cakes              page  1 hits 1000 kept  563/600  total  17994
+  cakes              page  2 hits 1000 kept  600/600  total  18031
+  biscuits           page  1 hits 1000 kept  600/600  total  18631
+  chocolates         page  1 hits 1000 kept  800/800  total  19431
+  candies            page  1 hits 1000 kept  600/600  total  20031
+  ice_creams         page  1 hits 1000 kept  600/600  total  20631
+  crisps             page  1 hits 1000 kept  500/500  total  21131
+  salty_snacks       page  1 hits 1000 kept  450/450  total  21581
+  nuts               page  1 hits 1000 kept  400/400  total  21981
+  hams               page  1 hits 1000 kept  514/600  total  22495
+  hams               page  2 hits 1000 kept  600/600  total  22581
+  sausages           page  1 hits 1000 kept  600/600  total  23181
+  salmons            page  1 hits 1000 kept  400/400  total  23581
+  sauces             page  1 hits 1000 kept  600/600  total  24181
+  condiments         page  1 hits 1000 kept  208/400  total  24389
+  condiments         page  2 hits 1000 kept  400/400  total  24581
+  soups              page  1 hits 1000 kept  350/350  total  24931
+  meals              page  1 hits 1000 kept  600/600  total  25531
+  pizzas             page  1 hits 1000 kept  400/400  total  25931
+  sandwiches         page  1 hits 1000 kept  300/300  total  26231
+target reached early at 26231 rows
+wrote C:\Users\Sami\BulgarCalTracker\app\src\main\assets\products.json: 26231 rows, 6302486 bytes
+  Кисели млека и скир: 4660
+  Тестени и сладкиши: 2953
+  Протеинови барове: 1898
+  Спортни добавки: 1846
+  Безалкохолни напитки: 1799
+  Зърнени закуски: 1738
+  Готови ястия: 1582
+  Шоколад и бонбони: 1415
+  Кафе и чай: 1156
+  Месо и колбаси: 1150
+  Енергийни напитки: 1095
+  Сосове и подправки: 992
+  Сладолед и десерти: 840
+  Млечни продукти: 697
+  Снаксове: 619
+  Вода: 495
+  Заместители на храна: 464
+  Риба и морски дарове: 382
+  Ядки и семена: 287
+  Бобови и зърнени храни: 127
+  Плодове и зеленчуци: 26
+  Паста и ориз: 6
+  Мазнини и масла: 4
+dropped: {'consistency': 456, 'atwater': 1211, 'name-length': 407, 'no-brand': 8039, 'brand-length': 12, 'duplicate': 6343, 'range': 50, 'junk-name': 66, 'macro-sum': 9, 'brand-cap': 937, 'name-script': 7}
+PRODUCTS_BUILD_EXIT=0

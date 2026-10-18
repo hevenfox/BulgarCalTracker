@@ -36,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bulgarcal.tracker.data.FoodEntity
+import com.bulgarcal.tracker.ui.food.ExtendedMacroRow
+import com.bulgarcal.tracker.ui.food.FoodSourceLine
 import com.bulgarcal.tracker.domain.MealType
 import com.bulgarcal.tracker.data.MealLogEntity
 import com.bulgarcal.tracker.ui.components.TealButton
@@ -92,8 +94,11 @@ fun LogFoodSheet(
                 color = TextSilver,
                 fontSize = 13.sp
             )
+            FoodSourceLine(food.source)
             Spacer(Modifier.height(12.dp))
             MacroSummaryRow(food = food, grams = grams.toFloatOrNull() ?: 100f)
+            Spacer(Modifier.height(6.dp))
+            ExtendedMacroRow(food = food, grams = grams.toFloatOrNull() ?: 100f)
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = grams,

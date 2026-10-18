@@ -1,5 +1,6 @@
 package com.bulgarcal.tracker.ui.more
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -8,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,8 +47,42 @@ fun InfoScreen(onBack: () -> Unit) {
                 lineHeight = 21.sp
             )
             Spacer8()
+            Spacer8()
+            Text("Данни за храните", color = TextWhite, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+            Spacer8()
             Text(
-                "Версия 1.0 · 1000+ храни в базата · Напомняния за хранене · Любими храни",
+                "Базата съдържа над 31 000 храни: български продукти и ястия, „Open Food Facts“ " +
+                    "продукти с етикетни стойности и ястия от USDA FoodData Central. Всяка храна " +
+                    "показва източника си в листа за добавяне.",
+                color = TextSilver,
+                fontSize = 14.sp,
+                lineHeight = 21.sp
+            )
+            Spacer8()
+            val uriHandler = LocalUriHandler.current
+            Text(
+                "Съдържа данни от Open Food Facts, достъпни под Open Database License (ODbL).",
+                color = EmeraldTeal,
+                fontSize = 13.sp,
+                modifier = Modifier.clickable { uriHandler.openUri("https://world.openfoodfacts.org") }
+            )
+            Text(
+                "opendatacommons.org/licenses/odbl/1-0",
+                color = EmeraldTeal,
+                fontSize = 13.sp,
+                modifier = Modifier.clickable {
+                    uriHandler.openUri("https://opendatacommons.org/licenses/odbl/1-0/")
+                }
+            )
+            Text(
+                "USDA FoodData Central (Survey Foods, FNDDS) — обществено достояние.",
+                color = EmeraldTeal,
+                fontSize = 13.sp,
+                modifier = Modifier.clickable { uriHandler.openUri("https://fdc.nal.usda.gov") }
+            )
+            Spacer8()
+            Text(
+                "Версия 1.1 · 31 000+ храни в базата · Напомняния за хранене · Любими храни",
                 color = TextSilver,
                 fontSize = 12.sp
             )

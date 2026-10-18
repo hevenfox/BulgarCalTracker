@@ -51,6 +51,7 @@ fun FoodSearchScreen(
     query: String,
     onQueryChange: (String) -> Unit,
     foods: List<FoodEntity>,
+    loading: Boolean = false,
     onCategory: (String) -> Unit,
     onRecipes: () -> Unit,
     onFavorites: () -> Unit,
@@ -71,6 +72,13 @@ fun FoodSearchScreen(
         )
         SearchBar(query, onQueryChange)
         if (query.isNotBlank()) {
+            if (foods.isEmpty()) {
+                Text(
+                    if (loading) "Зареждам базата с храни…" else "Няма намерени храни.",
+                    color = TextSilver,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
             LazyColumn(Modifier.weight(1f).padding(horizontal = 16.dp)) {
                 items(foods) { food ->
                     Text(
