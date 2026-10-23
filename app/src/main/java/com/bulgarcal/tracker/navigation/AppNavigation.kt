@@ -45,6 +45,7 @@ import com.bulgarcal.tracker.ui.food.FoodSearchScreen
 import com.bulgarcal.tracker.ui.food.MyRecipesScreen
 import com.bulgarcal.tracker.ui.food.NewProductScreen
 import com.bulgarcal.tracker.ui.food.NewRecipeScreen
+import com.bulgarcal.tracker.ui.scan.ScannerScreen
 import com.bulgarcal.tracker.ui.home.HomeScreen
 import com.bulgarcal.tracker.ui.more.CalendarScreen
 import com.bulgarcal.tracker.ui.more.FeedbackScreen
@@ -81,6 +82,7 @@ object Routes {
     const val FOOD_CATEGORY = "food_category/{category}"
     const val MY_RECIPES = "my_recipes"
     const val FAVORITES = "favorites"
+    const val SCANNER = "scanner"
     const val NEW_PRODUCT = "new_product"
     const val NEW_RECIPE = "new_recipe"
     const val DETAILS = "details"
@@ -335,6 +337,7 @@ private fun NavGraphBuilder.foodRoutes(nav: NavHostController, vm: TrackerViewMo
             onRecipes = { nav.navigate(Routes.MY_RECIPES) },
             onFavorites = { nav.navigate(Routes.FAVORITES) },
             onAddProduct = { showCreate = true },
+            onScan = { nav.navigate(Routes.SCANNER) },
             onFoodClick = { foodToLog = it }
         )
         if (showCreate) {
@@ -450,6 +453,20 @@ private fun NavGraphBuilder.foodRoutes(nav: NavHostController, vm: TrackerViewMo
                 onProduct = { nav.navigate(Routes.NEW_PRODUCT); showCreate = false }
             )
         }
+    }
+    composable(Routes.SCANNER) {
+        val selectedDate by vm.selectedDate.collectAsState()
+        val pendingMeal by vm.pendingMeal.collectAsState()
+        ScannerScreen(
+            vm = vm,
+            defaultDate = selectedDate,
+            initialMeal = pendingMeal,
+            onClose = { nav.popBackStack() },
+            onLogged = {
+                vm.setPendingMeal(null)
+                nav.popBackStack(Routes.MAIN, false)
+            }
+        )
     }
     composable(Routes.NEW_PRODUCT) {
         NewProductScreen(

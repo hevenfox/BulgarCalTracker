@@ -33,6 +33,13 @@ source code remains MIT.
 ODbL, with a clickable link, and every product's source is shown in the food sheet
 ("Данни: Open Food Facts (ODbL 1.0)").
 
+**Runtime lookups.** Scanning a barcode the app does not know queries the same
+service one product at a time (`api/v3/product/{barcode}`, anonymous, with the app's
+User-Agent). A product found this way is stored on the device like any bundled
+product, keeps `source: "off"`, and therefore shows the same ODbL attribution in the
+food sheet. Those stored rows are a local copy of the adapted database, not a
+separate one. Only the barcode is sent — no profile, no diary, no device id.
+
 Not affiliated with or endorsed by Open Food Facts.
 
 ## USDA FoodData Central (public domain)
@@ -60,6 +67,10 @@ kept, dropped and exempt rows per source are written into
 
 ## What the values mean
 
+Barcodes come from Open Food Facts' `code` field and are kept only when they are a
+usable GTIN (8, 12, 13 or 14 digits). One barcode may map to exactly one row, so a
+scan is never ambiguous; duplicates are dropped when the database is built.
+
 All values are **per 100 g / 100 ml**. The package size shown in a product name
 (`Monster Ultra White 500 ml`) is informational: logging 250 g of it means 250 ml.
 
@@ -74,8 +85,8 @@ estimate applies carry 0, which the app shows as "—".
 python tools/foods_db/build_foods.py --write      # clean the 92 curated foods
 python tools/foods_db/build_products.py           # fetch + filter Open Food Facts
 python tools/foods_db/build_dishes.py --min 5000  # USDA FNDDS + Bulgarian dishes
-python tools/foods_db/validate.py                 # gates + report.md
-python tools/foods_db/migration_smoke.py          # Room 3 -> 4 migration check
+python tools/foods_db/validate.py                 # gates + report.md (incl. barcodes)
+python tools/foods_db/migration_smoke.py          # Room 3 -> 4 -> 5 migration check
 ```
 
 The scripts cache their downloads under `tools/foods_db/cache/` (git-ignored).

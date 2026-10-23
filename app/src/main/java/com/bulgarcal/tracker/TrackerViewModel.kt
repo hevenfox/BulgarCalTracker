@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.bulgarcal.tracker.data.ActivityLevel
 import com.bulgarcal.tracker.data.AppDatabase
+import com.bulgarcal.tracker.data.BarcodeLookup
 import com.bulgarcal.tracker.data.DayCalorieRow
 import com.bulgarcal.tracker.data.DayTotalsRow
 import com.bulgarcal.tracker.data.WaterDayRow
@@ -15,6 +16,7 @@ import com.bulgarcal.tracker.data.MealLogEntity
 import com.bulgarcal.tracker.data.WaterLogEntity
 import com.bulgarcal.tracker.data.PaceOption
 import com.bulgarcal.tracker.data.RecipeIngredientEntity
+import com.bulgarcal.tracker.data.ScanResult
 import com.bulgarcal.tracker.data.Sex
 import com.bulgarcal.tracker.data.TrackerRepository
 import com.bulgarcal.tracker.data.UserProfileEntity
@@ -40,6 +42,7 @@ class TrackerViewModel(app: Application) : AndroidViewModel(app) {
 
     private val db = AppDatabase.get(app)
     private val repo = TrackerRepository(db)
+    private val barcodeLookup = BarcodeLookup(repo)
 
     private val _selectedDate = MutableStateFlow(LocalDate.now())
     val selectedDate: StateFlow<LocalDate> = _selectedDate.asStateFlow()
@@ -272,6 +275,15 @@ class TrackerViewModel(app: Application) : AndroidViewModel(app) {
     fun saveCustomProduct(food: FoodEntity) {
         viewModelScope.launch { repo.saveCustomProduct(food) }
     }
+
+    /**
+     * A barcode scan: the local database first, then Open Food Facts. Suspending so
+     * the scanner can show the lookup in progress; safe to cancel on back.
+     */
+    suspend fun scanBarcode(raw: String): ScanResult = barcodeLookup.resolve(raw)
+
+    /** Saves a product created from an unknown barcode and returns it with its id. */
+    suspend fun saveProduct(food: FoodEntity): FoodEntity = repo.saveCustomProduct(food)
 
     fun saveRecipe(food: FoodEntity, ingredients: List<RecipeIngredientEntity>) {
         viewModelScope.launch { repo.saveRecipe(food, ingredients) }

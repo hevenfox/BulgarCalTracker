@@ -153,6 +153,40 @@ class FoodDataContractTest {
     }
 
     @Test
+    fun `scans are mostly answered from the bundled barcodes`() {
+        val seen = HashMap<String, String>()
+        var withBarcode = 0
+        val allowedLengths = setOf(8, 12, 13, 14)
+        for ((file, array) in listOf("foods" to foods, "products" to products, "dishes" to dishes)) {
+            for (index in 0 until array.length()) {
+                val row = array.getJSONObject(index)
+                if (!row.has("barcode")) continue
+                val code = row.getString("barcode")
+                val where = "$file[$index] ${row.optString("name")}"
+                assertTrue("$where: barcode is not digits", code.all { it.isDigit() })
+                assertTrue("$where: barcode length ${code.length}", code.length in allowedLengths)
+                val previous = seen.put(code, where)
+                assertTrue("$where: barcode $code already used by $previous", previous == null)
+                withBarcode++
+            }
+        }
+        assertTrue("only $withBarcode bundled barcodes", withBarcode >= 25_000)
+        assertEquals("26 000+ expected", withBarcode, seen.size)
+    }
+
+    @Test
+    fun `a shipped barcode resolves to a real product`() {
+        // A real row from the bundle, leading zero included: scanning this code has to
+        // work with the phone offline, and the seeder must keep the "0" intact.
+        val row = (0 until products.length()).map { products.getJSONObject(it) }
+            .firstOrNull { it.optString("barcode") == "0851621003075" }
+        assertTrue("0851621003075 is missing from products.json", row != null)
+        assertTrue("the shipped row has no calories", row!!.getInt("calories") > 0)
+        assertEquals("off", row.getString("source"))
+        assertEquals("0851621003075".length, row.getString("barcode").length)
+    }
+
+    @Test
     fun `bulgarian dishes are present with computed values`() {
         val curated = (0 until dishes.length()).map { dishes.getJSONObject(it) }
             .filter { it.optString("source") == "curated" }

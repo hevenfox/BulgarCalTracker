@@ -19,8 +19,10 @@ from common import (  # noqa: E402
     ASSETS,
     CACHE,
     CATEGORIES,
+    GTIN_LENGTHS,
     MAX_CALORIES_PER_100G,
     atwater_ok,
+    normalize_barcode,
     normalize_key,
     read_json,
 )
@@ -33,12 +35,15 @@ MODELS = os.path.join(
 MIN_PRODUCTS = 25_000
 MIN_DISHES = 5_000
 EXPECTED_FOODS = 92
+# Scans are answered from the bundled database first, so the number of shipped
+# barcodes is a product guarantee, not a nice-to-have.
+MIN_BARCODES = 25_000
 
 REQUIRED = ("name", "category", "calories", "carbs", "protein", "fats")
 OPTIONAL = (
     "saturated_fats", "mono_fats", "poly_fats", "trans_fats", "cholesterol",
     "sugars", "fiber", "glycemic_index", "glycemic_load", "salt", "potassium",
-    "water", "source",
+    "water", "barcode", "source",
 )
 ALLOWED = set(REQUIRED) | set(OPTIONAL)
 
@@ -83,6 +88,10 @@ def main() -> int:
     alcohol_exempt = 0
     range_bad: list[str] = []
     unknown_keys: list[str] = []
+    bad_barcodes: list[str] = []
+    seen_barcodes: dict[str, str] = {}
+    barcode_duplicates: list[str] = []
+    with_barcode = 0
     asset_bytes = 0
 
     for filename, rows in files.items():
@@ -112,6 +121,17 @@ def main() -> int:
                     range_bad.append(f"{where}: {key} {value}")
             if not row.get("source"):
                 range_bad.append(f"{where}: no source")
+            barcode = row.get("barcode")
+            if barcode is not None:
+                if not isinstance(barcode, str) or normalize_barcode(barcode) != barcode:
+                    bad_barcodes.append(f"{where}: barcode {barcode!r}")
+                elif barcode in seen_barcodes:
+                    barcode_duplicates.append(
+                        f"{barcode} in {filename} and {seen_barcodes[barcode]}"
+                    )
+                else:
+                    seen_barcodes[barcode] = filename
+                    with_barcode += 1
             key = normalize_key(name)
             if key in seen_names:
                 duplicates.append(f"{name!r} in {filename} and {seen_names[key]}")
@@ -138,6 +158,12 @@ def main() -> int:
         failures.append(f"{len(range_bad)} rows with unusable numbers")
     if unknown_keys:
         failures.append(f"{len(unknown_keys)} rows with unknown keys")
+    if bad_barcodes:
+        failures.append(f"{len(bad_barcodes)} rows with an unusable barcode")
+    if barcode_duplicates:
+        failures.append(f"{len(barcode_duplicates)} barcodes shared by more than one row")
+    if with_barcode < MIN_BARCODES:
+        failures.append(f"only {with_barcode} rows carry a barcode (< {MIN_BARCODES})")
 
     empty = [c for c in browse if c != "Общи" and per_category.get(c, 0) == 0]
     if empty:
@@ -194,6 +220,11 @@ def main() -> int:
     report.append(f"- alcohol rows exempt from it (7 kcal/g, not trackable): **{alcohol_exempt}**")
     report.append(f"- rows with unusable numbers: **{len(range_bad)}**")
     report.append(f"- rows with unknown keys: **{len(unknown_keys)}**")
+    report.append(f"- rows with a usable barcode: **{with_barcode:,}**")
+    report.append(f"- unusable barcodes: **{len(bad_barcodes)}**")
+    report.append(f"- barcodes shared by two rows: **{len(barcode_duplicates)}**")
+    report.append(f"- barcode lengths shipped: **{sorted({len(b) for b in seen_barcodes})}** "
+                  f"(allowed {list(GTIN_LENGTHS)})")
     report.append(f"- categories with no food (other than Общи): **{len(empty)}**")
     report.append(f"- biggest category share: **{biggest / total * 100:.1f}%**")
     report.append(f"- GI/GL inconsistencies: **{gh_slips}**")
@@ -209,6 +240,9 @@ def main() -> int:
     if unknown_keys:
         report += ["", "### Unknown keys", ""]
         report += [f"- {item}" for item in unknown_keys[:20]]
+    if bad_barcodes or barcode_duplicates:
+        report += ["", "### Barcode problems", ""]
+        report += [f"- {item}" for item in (bad_barcodes + barcode_duplicates)[:20]]
     for extra in ("products_build.json", "dishes_build.json", "foods_build.json"):
         path = os.path.join(CACHE, extra)
         if os.path.exists(path):

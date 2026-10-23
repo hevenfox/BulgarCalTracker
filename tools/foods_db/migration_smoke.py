@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Smoke-test the Room 3 -> 4 migration without a device.
+"""Smoke-test the Room 3 -> 4 -> 5 migrations without a device.
 
-The ALTER statements are read out of AppDatabase.kt itself (never duplicated
-here), applied to a SQLite database built with the version 3 schema, and checked:
-existing food, diary, weight and water rows must survive and the new columns must
-come back as 0 / ''.
+The ALTER/CREATE statements are read out of AppDatabase.kt itself (never
+duplicated here), applied to a SQLite database built with the version 3 schema, and
+checked: existing food, diary, weight and water rows must survive, the new columns
+must come back as 0 / '' and a barcode must be findable through the index.
 """
 
 from __future__ import annotations
@@ -76,25 +76,37 @@ EXPECTED_NEW_COLUMNS = {
                   "water", "glycemicLoad"],
 }
 
+# Version 5: the barcode a scan resolves to, and the index behind that lookup.
+V5_COLUMNS = {"foods": ["barcode"]}
+V5_INDEX = "index_foods_barcode"
 
-def migration_statements() -> list[str]:
+
+def migration_statements(name: str) -> list[str]:
+    """Every SQL string literal inside the named Migration object."""
     with open(APP_DATABASE, encoding="utf-8") as fh:
         text = fh.read()
-    block = re.search(r"MIGRATION_3_4.*?\n        \}", text, re.S)
+    block = re.search(name + r".*?\n        \}", text, re.S)
     if not block:
-        raise SystemExit("could not find MIGRATION_3_4 in AppDatabase.kt")
-    return re.findall(r'"(ALTER TABLE [^"]+)"', block.group(0))
+        raise SystemExit(f"could not find {name} in AppDatabase.kt")
+    return re.findall(r"\"((?:ALTER|CREATE)[^\"]+)\"", block.group(0))
 
 
 def main() -> int:
-    statements = migration_statements()
+    v4 = migration_statements("MIGRATION_3_4")
+    v5 = migration_statements("MIGRATION_4_5")
+    statements = v4 + v5
     failures: list[str] = []
 
+    alters = [s for s in v4 if s.startswith("ALTER TABLE")]
     expected_count = sum(len(v) for v in EXPECTED_NEW_COLUMNS.values())
-    if len(statements) != expected_count:
+    if len(alters) != expected_count:
         failures.append(
-            f"migration has {len(statements)} statements, expected {expected_count}"
+            f"migration 3 -> 4 has {len(alters)} statements, expected {expected_count}"
         )
+    if not any(f"ADD COLUMN barcode " in s for s in v5):
+        failures.append("migration 4 -> 5 does not add foods.barcode")
+    if not any(V5_INDEX in s and s.upper().startswith("CREATE INDEX") for s in v5):
+        failures.append(f"migration 4 -> 5 does not create {V5_INDEX}")
 
     with open(ENTITIES, encoding="utf-8") as fh:
         entities = fh.read()
@@ -103,8 +115,18 @@ def main() -> int:
             if not re.search(rf'@ColumnInfo\(defaultValue = "0"\) val {column}: Float = 0f', entities) \
                     and not re.search(rf'@ColumnInfo\(defaultValue = "\'\'"\) val {column}: String = ""', entities):
                 failures.append(f"{column} is not declared with a matching @ColumnInfo default")
-            if not any(f"ADD COLUMN {column} " in s for s in statements):
+            if not any(f"ADD COLUMN {column} " in s for s in alters):
                 failures.append(f"migration does not add {table}.{column}")
+    for table, columns in V5_COLUMNS.items():
+        for column in columns:
+            if not re.search(rf'@ColumnInfo\(defaultValue = "\'\'"\) val {column}: String = ""', entities):
+                failures.append(f"{table}.{column} is not declared with a matching @ColumnInfo default")
+    with open(os.path.join(
+        ROOT, "app", "src", "main", "java", "com", "bulgarcal", "tracker", "data", "Daos.kt"
+    ), encoding="utf-8") as fh:
+        daos = fh.read()
+    if "WHERE barcode = :code" not in daos:
+        failures.append("FoodDao has no barcode query")
 
     with tempfile.TemporaryDirectory() as tmp:
         db_path = os.path.join(tmp, "v3.db")
@@ -131,16 +153,18 @@ def main() -> int:
                 failures.append(f"{statement} -> {exc}")
         conn.commit()
 
-        for table, columns in EXPECTED_NEW_COLUMNS.items():
+        for table, columns in list(EXPECTED_NEW_COLUMNS.items()) + list(V5_COLUMNS.items()):
             present = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
             for column in columns:
                 if column not in present:
                     failures.append(f"{table}.{column} missing after migration")
 
-        row = conn.execute("SELECT name, calories, monoFats, searchKey, source FROM foods").fetchone()
+        row = conn.execute(
+            "SELECT name, calories, monoFats, searchKey, source, barcode FROM foods"
+        ).fetchone()
         if row is None or row[0] != "Кисело мляко 2%" or row[1] != 50:
             failures.append(f"food row did not survive the migration: {row}")
-        elif row[2] != 0 or row[3] != "" or row[4] != "":
+        elif row[2] != 0 or row[3] != "" or row[4] != "" or row[5] != "":
             failures.append(f"new food columns do not default to 0/'': {row}")
 
         log = conn.execute("SELECT foodName, calories, monoFats, glycemicLoad FROM meal_logs").fetchone()
@@ -153,15 +177,41 @@ def main() -> int:
         water = conn.execute("SELECT COUNT(*) FROM water_logs").fetchone()[0]
         if weights != 1 or water != 1:
             failures.append(f"weight/water rows lost: weights={weights} water={water}")
+
+        # A scanned product: stored with its barcode, then found by the exact SQL
+        # FoodDao.byBarcode runs - and the index must actually be used.
+        conn.execute(
+            "INSERT INTO foods (name, category, calories, carbs, protein, fats, saturatedFats,"
+            " sugars, fiber, glycemicIndex, salt, isCustom, isRecipe, description, servingGrams,"
+            " isFavorite, barcode) VALUES ('Corny big dark chocolate','Снаксове',424,67.3,5.3,"
+            "13.8,8.1,34,3.4,0,0.51,1,0,'',100,0,'4011800616519')"
+        )
+        conn.commit()
+        hit = conn.execute(
+            "SELECT name, calories, isCustom FROM foods WHERE barcode = ? LIMIT 1",
+            ("4011800616519",),
+        ).fetchone()
+        if hit is None or hit[0] != "Corny big dark chocolate" or hit[1] != 424 or hit[2] != 1:
+            failures.append(f"barcode lookup did not return the scanned product: {hit}")
+        plan = " ".join(
+            str(part)
+            for step in conn.execute(
+                "EXPLAIN QUERY PLAN SELECT * FROM foods WHERE barcode = ? LIMIT 1",
+                ("4011800616519",),
+            )
+            for part in step
+        )
+        if V5_INDEX not in plan:
+            failures.append(f"barcode query does not use {V5_INDEX}: {plan}")
         conn.close()
 
-    print(f"migration statements applied: {len(statements)}")
+    print(f"migration statements applied: {len(statements)} (3->4: {len(v4)}, 4->5: {len(v5)})")
     if failures:
         print("FAILED CHECKS:")
         for failure in failures:
             print(" -", failure)
         return 1
-    print("migration 3 -> 4 keeps existing data and adds every new column")
+    print("migrations 3 -> 4 -> 5 keep existing data, add every new column and serve barcode lookups")
     return 0
 
 

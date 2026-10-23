@@ -58,6 +58,7 @@ fun FoodSearchScreen(
     onRecipes: () -> Unit,
     onFavorites: () -> Unit,
     onAddProduct: () -> Unit,
+    onScan: () -> Unit,
     onFoodClick: (FoodEntity) -> Unit
 ) {
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
@@ -72,7 +73,7 @@ fun FoodSearchScreen(
                 }
             }
         )
-        SearchBar(query, onQueryChange)
+        SearchBar(query, onQueryChange, onScan)
         if (query.isNotBlank()) {
             if (foods.isEmpty()) {
                 Text(
@@ -222,24 +223,31 @@ fun CreationSheet(onDismiss: () -> Unit, onRecipe: () -> Unit, onProduct: () -> 
     }
 }
 
+/**
+ * The product form, also used by the scanner when a barcode is unknown: [prefill]
+ * carries whatever Open Food Facts had and [barcode] is kept on the saved row.
+ */
 @Composable
 fun NewProductScreen(
     onBack: () -> Unit,
-    onSave: (FoodEntity) -> Unit
+    onSave: (FoodEntity) -> Unit,
+    prefill: FoodEntity? = null,
+    barcode: String = "",
+    lockBarcode: Boolean = false
 ) {
-    var name by remember { mutableStateOf("") }
-    var desc by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("Моите Рецепти") }
-    var calories by remember { mutableStateOf("0") }
-    var carbs by remember { mutableStateOf("0") }
-    var protein by remember { mutableStateOf("0") }
-    var fats by remember { mutableStateOf("0") }
-    var sat by remember { mutableStateOf("0") }
-    var sugars by remember { mutableStateOf("0") }
-    var fiber by remember { mutableStateOf("0") }
-    var gi by remember { mutableStateOf("0") }
-    var salt by remember { mutableStateOf("0") }
-    var grams by remember { mutableStateOf("100") }
+    var name by remember { mutableStateOf(prefill?.name ?: "") }
+    var desc by remember { mutableStateOf(prefill?.description ?: "") }
+    var category by remember { mutableStateOf(prefill?.category ?: "Моите Рецепти") }
+    var calories by remember { mutableStateOf((prefill?.calories ?: 0).toString()) }
+    var carbs by remember { mutableStateOf(fieldText(prefill?.carbs ?: 0f)) }
+    var protein by remember { mutableStateOf(fieldText(prefill?.protein ?: 0f)) }
+    var fats by remember { mutableStateOf(fieldText(prefill?.fats ?: 0f)) }
+    var sat by remember { mutableStateOf(fieldText(prefill?.saturatedFats ?: 0f)) }
+    var sugars by remember { mutableStateOf(fieldText(prefill?.sugars ?: 0f)) }
+    var fiber by remember { mutableStateOf(fieldText(prefill?.fiber ?: 0f)) }
+    var gi by remember { mutableStateOf(fieldText(prefill?.glycemicIndex ?: 0f)) }
+    var salt by remember { mutableStateOf(fieldText(prefill?.salt ?: 0f)) }
+    var grams by remember { mutableStateOf(fieldText(prefill?.servingGrams ?: 100f)) }
 
     FormScreenInsets {
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
@@ -259,10 +267,19 @@ fun NewProductScreen(
                     glycemicIndex = gi.toFloatOrNull() ?: 0f,
                     salt = salt.toFloatOrNull() ?: 0f,
                     servingGrams = grams.toFloatOrNull() ?: 100f,
-                    isCustom = true
+                    isCustom = true,
+                    barcode = if (lockBarcode) barcode else barcode.filter { it.isDigit() }
                 )
             )
         })
+        if (barcode.isNotBlank()) {
+            Text(
+                "Баркод: $barcode",
+                color = EmeraldTeal,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
         LazyColumn {
             item { Field("Име на продукт", name) { name = it } }
             item { Field("Описание (по избор)", desc) { desc = it } }
@@ -305,14 +322,31 @@ fun NewRecipeScreen(onBack: () -> Unit, onSave: (FoodEntity) -> Unit) {
 }
 
 @Composable
-private fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
+private fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onScan: (() -> Unit)? = null
+) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
         placeholder = { Text("Търсене", color = TextSilver) },
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         shape = RoundedCornerShape(12.dp),
-        trailingIcon = { Icon(Icons.Default.QrCodeScanner, contentDescription = null, tint = TextSilver) },
+        trailingIcon = {
+            if (onScan != null) {
+                Icon(
+                    Icons.Default.QrCodeScanner,
+                    contentDescription = "Сканирай баркод",
+                    tint = EmeraldTeal,
+                    modifier = Modifier
+                        .clickable(onClick = onScan)
+                        .padding(4.dp)
+                )
+            } else {
+                Icon(Icons.Default.QrCodeScanner, contentDescription = null, tint = TextSilver)
+            }
+        },
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = InputGray,
             unfocusedContainerColor = InputGray,
@@ -323,6 +357,10 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
         )
     )
 }
+
+/** 3.5 stays "3.5" while 100.0 becomes "100", so the form carries no noise. */
+private fun fieldText(value: Float): String =
+    if (value == value.toInt().toFloat()) value.toInt().toString() else value.toString()
 
 /**
  * Text input whose keyboard follows the kind of value: numbers only for macros,

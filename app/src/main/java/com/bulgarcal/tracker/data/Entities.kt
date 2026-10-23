@@ -2,9 +2,14 @@ package com.bulgarcal.tracker.data
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "foods")
+/**
+ * [barcode] is indexed because a scan looks a product up by it directly; the
+ * column holds a digits-only GTIN (8, 12, 13 or 14 digits) or "".
+ */
+@Entity(tableName = "foods", indices = [Index(value = ["barcode"])])
 data class FoodEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
@@ -33,7 +38,9 @@ data class FoodEntity(
     @ColumnInfo(defaultValue = "0") val water: Float = 0f,
     @ColumnInfo(defaultValue = "0") val glycemicLoad: Float = 0f,
     @ColumnInfo(defaultValue = "''") val searchKey: String = "",
-    @ColumnInfo(defaultValue = "''") val source: String = ""
+    @ColumnInfo(defaultValue = "''") val source: String = "",
+    /** Added in database version 5: the retail barcode printed on the package. */
+    @ColumnInfo(defaultValue = "''") val barcode: String = ""
 )
 
 @Entity(tableName = "meal_logs")

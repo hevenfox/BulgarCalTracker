@@ -386,6 +386,19 @@ def glycemic_load(gi, carbs, fiber) -> float:
     return round(gi * available / 100.0, 2)
 
 
+GTIN_LENGTHS = (8, 12, 13, 14)
+
+
+def normalize_barcode(value) -> str:
+    """Digits-only GTIN (8, 12, 13 or 14 digits), or "" when the value is not a
+    usable retail barcode. Open Food Facts also stores short category ids such as
+    "31106" in the code field; those must never become a scanner match."""
+    text = str(value if value is not None else "").strip()
+    if not text.isdigit():
+        return ""
+    return text if len(text) in GTIN_LENGTHS else ""
+
+
 def write_json_array(path: str, rows: list[dict]) -> int:
     """Write one compact object per line inside a JSON array; returns bytes."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -421,6 +434,7 @@ def food_row(
     salt=0.0,
     potassium=0.0,
     water=0.0,
+    barcode: str = "",
     source: str = "",
 ) -> dict:
     """One asset row. Zero-valued optional keys are dropped: the seeder defaults
@@ -447,6 +461,7 @@ def food_row(
         "salt": round_num(salt, 2),
         "potassium": round_num(potassium, 1),
         "water": round_num(water, 1),
+        "barcode": normalize_barcode(barcode),
         "source": source or None,
     }
     for key, value in optional.items():

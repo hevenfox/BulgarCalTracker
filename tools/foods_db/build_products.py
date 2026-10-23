@@ -41,6 +41,7 @@ from common import (  # noqa: E402
     estimate_gi,
     food_row,
     is_european,
+    normalize_barcode,
     normalize_key,
     write_json_array,
 )
@@ -312,10 +313,12 @@ def parse_hit(hit: dict, fallback_category: str):
         glycemic_index=gi,
         salt=salt,
         potassium=(num(nutriments, *NUTRIENT_ALIASES["potassium"]) or 0.0) * 1000.0,
+        barcode=hit.get("code"),
         source="off",
     )
     meta = {
         "key": normalize_key(f"{brand} {name} {quantity}"),
+        "barcode": normalize_barcode(hit.get("code")),
         "brand": normalize_key(brand),
         "europe": is_european(hit.get("countries_tags")) or bool(
             hit.get("product_name_bg")
@@ -354,6 +357,9 @@ def main() -> int:
     # visible label (e.g. "Coca cola zero" from different packs), so the label is
     # deduplicated as well - users must never see the same name twice.
     seen_labels: set[str] = set()
+    # One barcode may only point at one row: a second product carrying the same
+    # GTIN would make a scan ambiguous.
+    seen_barcodes: set[str] = set()
     brand_category_count: dict[tuple[str, str], int] = {}
     dropped: dict[str, int] = {}
     stats: list[dict] = []
@@ -384,6 +390,11 @@ def main() -> int:
                 reasons["duplicate"] = reasons.get("duplicate", 0) + 1
                 dropped["duplicate"] = dropped.get("duplicate", 0) + 1
                 continue
+            barcode = meta.get("barcode") or ""
+            if barcode and barcode in seen_barcodes:
+                reasons["duplicate-barcode"] = reasons.get("duplicate-barcode", 0) + 1
+                dropped["duplicate-barcode"] = dropped.get("duplicate-barcode", 0) + 1
+                continue
             bc = (meta["brand"], row["category"])
             if brand_category_count.get(bc, 0) >= per_brand_cap:
                 reasons["brand-cap"] = reasons.get("brand-cap", 0) + 1
@@ -396,6 +407,8 @@ def main() -> int:
             selected.append((row, meta))
             seen_keys.add(meta["key"])
             seen_labels.add(label_key)
+            if barcode:
+                seen_barcodes.add(barcode)
             brand_category_count[bc] = brand_category_count.get(bc, 0) + 1
             brand_totals[meta["brand"]] = brand_totals.get(meta["brand"], 0) + 1
             return True
@@ -499,6 +512,8 @@ def main() -> int:
         "by_category": dict(sorted(by_category.items(), key=lambda kv: -kv[1])),
         "segments": stats,
         "dropped": dropped,
+        "with_barcode": sum(1 for row in rows if row.get("barcode")),
+        "unique_barcodes": len(seen_barcodes),
         "unique_brands": len(brand_totals),
     }
     os.makedirs(CACHE, exist_ok=True)

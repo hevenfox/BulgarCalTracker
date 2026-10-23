@@ -47,6 +47,10 @@ interface FoodDao {
     @Query("SELECT * FROM foods WHERE id = :id")
     suspend fun getById(id: Long): FoodEntity?
 
+    /** Barcode lookup for the scanner; the index on `barcode` serves this query. */
+    @Query("SELECT * FROM foods WHERE barcode = :code LIMIT 1")
+    suspend fun byBarcode(code: String): FoodEntity?
+
     @Query("SELECT * FROM foods WHERE isCustom = 1 AND isRecipe = 0 ORDER BY name")
     fun customProducts(): Flow<List<FoodEntity>>
 

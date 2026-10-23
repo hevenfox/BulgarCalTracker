@@ -23,9 +23,12 @@ import org.json.JSONObject
 object FoodSeeder {
     private const val TAG = "FoodSeeder"
 
-    /** Bump when replacing the assets (v4 = 92 + ~26 000 + ~5 000 rows). */
+    /**
+     * Bump when replacing the assets.
+     * v4 = 92 + ~26 000 + ~5 000 rows, v5 = the same rows with their barcodes.
+     */
     private const val SEED_KEY = "foods_db_version"
-    private const val CURRENT_VERSION = 4
+    private const val CURRENT_VERSION = 5
 
     private const val DEFAULT_CATEGORY = "Общи"
     private const val BATCH_SIZE = 1_000
@@ -105,7 +108,8 @@ object FoodSeeder {
             water = o.optNumber("water"),
             glycemicLoad = o.optNumber("glycemic_load", "glycemicLoad"),
             searchKey = SearchKey.of(name),
-            source = o.optString("source")
+            source = o.optString("source"),
+            barcode = o.optString("barcode").filter { c -> c.isDigit() }
         )
     }
 

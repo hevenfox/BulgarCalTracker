@@ -7,11 +7,12 @@ Fully local: no accounts, no cloud sync, no paywalls. The food database ships in
 
 Grab the APK from the [Releases](https://github.com/hevenfox/BulgarCalTracker/releases) page.
 
-- **Requirements:** Android 8.0+ (API 26), ~20 MB
-- The APK is a **debug-signed development build** — Android will ask you to allow installing from unknown sources, and Play Protect may warn about it. It is fine for personal use; a Play-ready release would need a proper signing key.
+- **Requirements:** Android 8.0+ (API 26), ~24 MB
+- The APK is a **development-signed build** — Android will ask you to allow installing from unknown sources, and Play Protect may warn about it. It is fine for personal use; a Play-ready release would need a store signing key.
+- Every release is built and attached by `.github/workflows/release.yml` when a `v*` tag is pushed, with the same signing key as before, so it installs over the previous version and keeps your diary.
 
 ```bash
-adb install -r app-debug.apk
+adb install -r BulgarCalTracker-v1.2.0.apk
 ```
 
 ## Build from source
@@ -22,8 +23,7 @@ Requirements: JDK 17+, Android SDK with API 35 (or just open the project in Andr
 # Windows
 gradlew.bat :app:assembleDebug
 
-# macOS / Linux — only gradlew.bat is committed, so bootstrap the wrapper once:
-gradle wrapper --gradle-version 8.11.1
+# macOS / Linux
 ./gradlew :app:assembleDebug
 ```
 
@@ -38,13 +38,15 @@ The APK lands in `app/build/outputs/apk/debug/app-debug.apk`.
 - **Дневник** — the day's log per meal, favourites stripe, tap an entry to edit grams / meal / date or delete it.
 - **Още** — read-only profile, **Вашите числа** (BMR, TDEE, ideal weight, kg and weeks to goal), reminders, theme and language.
 - **Food logging** — 31 000+ bundled foods in 30 browse categories (branded products, fitness products, drinks, everyday groceries, dishes), searchable from either keyboard layout ("musaka" finds "Мусака"), plus custom products and recipes, favourite (star) foods, a dedicated Любими screen, micro-nutrient details (net carbs, sugars, fiber, GI/GL, saturated/mono/poly/trans fats, cholesterol, potassium, water) and a 100–3230 kcal macro-balance editor.
+- **Barcode scanning** — the scanner icon in the food search field opens the camera. The app answers from the phone first (26 000+ bundled barcodes, plus every product scanned before), then from Open Food Facts; a product found online is stored locally, so it can be searched by name later and the next scan works offline. An unknown code asks whether to add the product and opens the normal form with that barcode attached. Manual digit entry covers a bad camera or a damaged label.
 - **Smart meal default** — when you add a food without picking a meal, the sheet selects it from the clock: 05–10 Закуска, 11–15 Обяд, 16–17 Хапване, 18–04 Вечеря.
 - **Meal reminders** — **Още → Напомняния** (defaults 08:00, 13:00, 19:00); tapping a notification opens food search, alarms reschedule daily and after reboot.
 
 ## Tech stack
 
 Kotlin 2.0 · Jetpack Compose (Material 3) · Navigation Compose · Room + KSP · DataStore · AlarmManager
-`minSdk 26` · `targetSdk 35` · `versionName 1.1.0`
+CameraX + ML Kit barcode scanning (bundled model, works offline) · Open Food Facts API v3
+`minSdk 26` · `targetSdk 35` · `versionName 1.2.0`
 
 ```
 app/src/main/java/com/bulgarcal/tracker/
@@ -52,7 +54,7 @@ app/src/main/java/com/bulgarcal/tracker/
 ├── domain/       calculation engine, progress analytics, models
 ├── navigation/   routes and the main shell (tabs, deep links)
 ├── reminders/    notification scheduling and receivers
-└── ui/           home · progress · diary · food · details · more · onboarding · theme · components
+└── ui/           home · progress · diary · food · scan · details · more · onboarding · theme · components
 ```
 
 ## Food database
@@ -64,7 +66,7 @@ next launch, keeping user products, recipes, diary, weight and water history).
 | File | Rows | What | Licence |
 | --- | --- | --- | --- |
 | `assets/foods.json` | 92 | curated Bulgarian foods and traditional dishes | MIT |
-| `assets/products.json` | ~26 200 | branded products (protein bars, skyr, protein powders, energy drinks, croissants, sodas, snacks, ready meals …) with label values | ODbL / DbCL |
+| `assets/products.json` | ~26 200 | branded products (protein bars, skyr, protein powders, energy drinks, croissants, sodas, snacks, ready meals …) with label values and their barcodes | ODbL / DbCL |
 | `assets/dishes.json` | 5 023 | 4 732 USDA FNDDS dishes plus 308 hand-authored Bulgarian dishes (мусака, крем супа, шкембе чорба …) | public domain / MIT |
 
 Row format — **snake_case** and **camelCase** keys are both accepted, and every key
@@ -97,6 +99,7 @@ after the first four is optional:
 - Values are per **100 g / 100 ml**; an unsupported value is simply absent and shows as 0 in the app.
 - `category` must be one of `FoodCategories` in `domain/Models.kt`, which must stay in sync with `CATEGORIES` in `tools/foods_db/common.py` (`validate.py` fails if they drift).
 - `source` is `off` (Open Food Facts), `usda`, `curated` or `user`, and is displayed in the food sheet.
+- `barcode` is an optional GTIN (8, 12, 13 or 14 digits, digits only) that the scanner resolves against. Barcodes are unique across the three files; `validate.py` fails otherwise. A product created from an unknown scan stores its barcode on the user's own row, and products fetched at scan time are stored the same way (`source: "off"`, `isCustom`) so they survive a reseed.
 
 ### Where the data comes from
 
@@ -112,7 +115,7 @@ python tools/foods_db/build_foods.py --write      # clean the curated foods
 python tools/foods_db/build_products.py           # fetch + filter Open Food Facts
 python tools/foods_db/build_dishes.py --min 5000  # USDA FNDDS + Bulgarian dishes
 python tools/foods_db/validate.py                 # gates, writes tools/foods_db/report.md
-python tools/foods_db/migration_smoke.py          # Room 3 -> 4 migration smoke test
+python tools/foods_db/migration_smoke.py          # Room 3 -> 4 -> 5 migration smoke test
 ```
 
 JVM tests (`gradlew.bat testDebugUnitTest`) parse the real assets and fail if the

@@ -12,6 +12,9 @@ class TrackerRepository(private val db: AppDatabase) {
     companion object {
         /** Marks rows the user created themselves (bundled rows carry off/usda/curated). */
         const val USER_SOURCE = "user"
+
+        /** A product pulled from Open Food Facts by a barcode scan. */
+        const val SCANNED_SOURCE = "off"
     }
 
     val profile: Flow<UserProfileEntity?> = db.userProfileDao().observe()
@@ -125,8 +128,8 @@ class TrackerRepository(private val db: AppDatabase) {
 
     suspend fun deleteLog(id: Long) = db.mealLogDao().delete(id)
 
-    suspend fun saveCustomProduct(food: FoodEntity): Long =
-        db.foodDao().insert(
+    suspend fun saveCustomProduct(food: FoodEntity): FoodEntity =
+        upsertWithBarcode(
             food.copy(
                 isCustom = true,
                 isRecipe = false,
@@ -134,6 +137,39 @@ class TrackerRepository(private val db: AppDatabase) {
                 source = USER_SOURCE
             )
         )
+
+    /**
+     * A product resolved from Open Food Facts. It is stored like any other food so
+     * that it can be found by name later (no barcode needed), is answered offline on
+     * the next scan, and survives a reseed of the bundled database (`isCustom`).
+     */
+    suspend fun saveScannedProduct(food: FoodEntity): FoodEntity =
+        upsertWithBarcode(
+            food.copy(
+                isCustom = true,
+                isRecipe = false,
+                searchKey = SearchKey.of(food.name),
+                source = food.source.ifBlank { SCANNED_SOURCE }
+            )
+        )
+
+    suspend fun foodByBarcode(barcode: String): FoodEntity? =
+        if (barcode.isBlank()) null else db.foodDao().byBarcode(barcode)
+
+    /**
+     * One barcode must never point at two foods, otherwise a scan would be a coin
+     * flip. Re-saving a known barcode updates that row in place instead.
+     */
+    private suspend fun upsertWithBarcode(food: FoodEntity): FoodEntity {
+        val existing = foodByBarcode(food.barcode)
+        val toSave = if (existing == null) {
+            food
+        } else {
+            food.copy(id = existing.id, isFavorite = existing.isFavorite || food.isFavorite)
+        }
+        val id = db.foodDao().insert(toSave)
+        return toSave.copy(id = if (id > 0) id else toSave.id)
+    }
 
     suspend fun saveRecipe(
         food: FoodEntity,
