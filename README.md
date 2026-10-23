@@ -7,7 +7,7 @@ Fully local: no accounts, no cloud sync, no paywalls. The food database ships in
 
 Grab the APK from the [Releases](https://github.com/hevenfox/BulgarCalTracker/releases) page.
 
-- **Requirements:** Android 8.0+ (API 26), ~24 MB
+- **Requirements:** Android 8.0+ (API 26), ~26 MB (ARM phones: the barcode model ships arm64-v8a and armeabi-v7a native libraries only)
 - The APK is a **development-signed build** — Android will ask you to allow installing from unknown sources, and Play Protect may warn about it. It is fine for personal use; a Play-ready release would need a store signing key.
 - Every release is built and attached by `.github/workflows/release.yml` when a `v*` tag is pushed, with the same signing key as before, so it installs over the previous version and keeps your diary.
 
