@@ -43,7 +43,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -95,6 +97,7 @@ fun ScannerScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
     val hasCamera = remember {
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
     }
@@ -129,6 +132,8 @@ fun ScannerScreen(
             return
         }
         manualError = null
+        // A short buzz confirms the read without needing to look at the screen.
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         stage = Stage.Looking(code)
         scope.launch {
             stage = when (val result = vm.scanBarcode(code)) {
