@@ -52,7 +52,7 @@ jobs:
       - name: Drop machine-specific Gradle settings
         # Older tags pin a local Android Studio JVM in gradle.properties, which no
         # runner can use. The setting is irrelevant here, where JAVA_HOME is set.
-        run: sed -i '/^org\\.gradle\\.java\\.home=/d' gradle.properties || true
+        run: sed -i '/^org[.]gradle[.]java[.]home=/d' gradle.properties || true
 
       - name: Make the wrapper executable
         run: chmod +x gradlew
